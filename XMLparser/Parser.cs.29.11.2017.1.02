@@ -1,0 +1,68 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Xml;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace XMLparser
+{
+    class Parser
+    {
+        public List<Parcel> parcels = new List<Parcel>();
+
+        public List<Parcel> Parse()
+        {
+            XmlDocument xDoc = new XmlDocument();
+            xDoc.Load("fullMap.xml");
+            XmlElement xRoot = xDoc.DocumentElement;
+            XmlNode Parcels = xRoot.ChildNodes.Item(0).ChildNodes.Item(0).ChildNodes.Item(1);
+
+            foreach (XmlNode xnode in Parcels)
+            {
+
+                string CadastralNumber = Convert.ToString(xnode.Attributes.Item(0).Value);
+                string Okato = "";
+                int Region = 0;
+                string Note = "";
+                foreach (XmlNode node in xnode.ChildNodes.Item(2).ChildNodes)
+                {
+                    if (node.Name == "Address")
+                    {
+                        Okato = node.FirstChild.InnerText;
+                        Region = Convert.ToInt32(node.ChildNodes.Item(2).InnerText);
+                        Note = node.LastChild.InnerText;
+                    }
+                }
+
+
+
+                XmlNode SpatialElement = null;
+                if (xnode.ChildNodes.Count >= 7)
+                {
+                    SpatialElement = xnode.ChildNodes.Item(6).ChildNodes.Item(0);
+                }
+
+                if (SpatialElement != null)
+                {
+                    Parcel parcel = new Parcel(CadastralNumber, Okato, Region, Note);
+                    foreach (XmlNode Point in SpatialElement)
+                    {
+
+                        string number = Convert.ToString(Point.Attributes.Item(1).Value);
+                        string X = Convert.ToString(Point.ChildNodes.Item(0).Attributes.Item(0).Value);
+                        string Y = Convert.ToString(Point.ChildNodes.Item(0).Attributes.Item(1).Value);
+                        Dot dot = new Dot(Convert.ToInt32(number), Convert.ToDouble(X),
+                            Convert.ToDouble(Y), parcel);
+                        parcel.AddDot(dot);
+                    }
+                    parcels.Add(parcel);
+                    
+                }
+
+
+            }
+            return parcels;
+        }
+    }
+}
